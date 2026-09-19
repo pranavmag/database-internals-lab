@@ -40,13 +40,6 @@ class BPlusTree:
         if index < len(leaf.keys) and leaf.keys[index] == key:
             return False
 
-        if (
-            len(leaf.keys) == self.max_keys
-            and leaf.parent is not None
-            and len(leaf.parent.keys) == self.max_keys
-        ):
-            raise NotImplementedError("Internal node splitting is the next thing I'll implement")
-
         leaf.keys.insert(index, key)
 
         if len(leaf.keys) > self.max_keys:
@@ -118,3 +111,42 @@ class BPlusTree:
 
         parent.keys.insert(leaf_index, separator)
         parent.children.insert(leaf_index + 1, right_leaf)
+
+        if len(parent.keys) > self.max_keys:
+            self._split_internal(parent)
+
+    def _split_internal(self, internal: InternalNode) -> None:
+        parent = internal.parent
+
+        if parent is None:
+            parent = InternalNode()
+            parent.children = [internal]
+
+            internal.parent = parent
+            self.root = parent
+
+        split_index = len(internal.keys) // 2
+
+        promoted_key = internal.keys[split_index]
+
+        right_internal = InternalNode()
+
+        right_internal.keys = internal.keys[split_index + 1:]
+        internal.keys = internal.keys[:split_index]
+
+        right_internal.children = internal.children[split_index + 1:]
+        internal.children = internal.children[:split_index + 1]
+
+        for child in right_internal.children:
+            child.parent = right_internal
+
+        right_internal.parent = parent
+
+        internal_index = parent.children.index(internal)
+
+        parent.keys.insert(internal_index, promoted_key)
+        parent.children.insert(internal_index + 1, right_internal)
+
+        if len(parent.keys) > self.max_keys:
+            self._split_internal(parent)
+

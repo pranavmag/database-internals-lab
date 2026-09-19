@@ -87,3 +87,38 @@ def test_non_root_leaf_split() -> None:
     assert left.parent is tree.root
     assert middle.parent is tree.root
     assert right.parent is tree.root
+
+def test_internal_root_split() -> None:
+    tree = BPlusTree(order=4)
+
+    for key in range(10, 101, 10):
+        tree.insert(key)
+
+    assert isinstance(tree.root, InternalNode)
+    assert tree.root.keys == [70]
+    assert len(tree.root.children) == 2
+
+    left = tree.root.children[0]
+    right = tree.root.children[1]
+
+    assert isinstance(left, InternalNode)
+    assert isinstance(right, InternalNode)
+
+    assert left.keys == [30, 50]
+    assert right.keys == [90]
+
+    assert left.parent is tree.root
+    assert right.parent is tree.root
+
+def test_search_after_internal_split() -> None:
+    tree = BPlusTree(order=4)
+
+    keys = list(range(10, 101, 10))
+
+    for key in keys:
+        tree.insert(key)
+
+    for key in keys:
+        assert tree.search(key)
+
+    assert not tree.search(55)
